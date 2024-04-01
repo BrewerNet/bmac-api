@@ -16,3 +16,6 @@ package-lock.json
 #mock data
 mock-data
 
+#prisma migrations
+/prisma/migrations
+data/
