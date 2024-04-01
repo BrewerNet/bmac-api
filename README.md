@@ -7,9 +7,10 @@
    git clone https://github.com/BrewerNet/bmac-api.git
    cd bmac-api
    ```
-2. setup enviroment variables
+2. setup enviroment variables and db (make sure you installed latest docker on your local machine)
    ``` bash
    cp .env.example .env
+   docker-compose up -d
    ```
 3. setup prisma schema and migration
    ``` bash
