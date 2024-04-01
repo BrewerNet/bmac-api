@@ -21,12 +21,6 @@
    npm run dev
    ```
 
-## Database
-
-Currently we use Postgres to store database locally.
-
-To implement another database, please update the database options
-
 ## Exposed api
 ### Users API
 
@@ -40,13 +34,5 @@ To implement another database, please update the database options
 
 - `GET /health` - Health check endpoint.
 
-## Docker Compose the Whole App
 ### Install Docker Desktop
 https://docs.docker.com/compose/install/
-
-### Set .env File
-1. change DATABASE_URL keyword "localhost" to "db"
-2. change username and password to the remote account username and password
-
-###Docker Compose Up
-run command `docker compose up`
