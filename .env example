@@ -1,1 +1,9 @@
 PORT=8080
+
+//please change username and password to your own postgresql account
+//when launch in docker, should change "localhost" to "db"
+DATABASE_URL="postgresql://username:password@localhost:5432/brewernet"
+
+//add you username and password here too
+POSTGRES_USER=username
+POSTGRES_PASSWORD=password
