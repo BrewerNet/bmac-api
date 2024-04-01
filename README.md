@@ -3,9 +3,11 @@
 ## How do I get set up?
 
 1. pull the dev branch
-2. npm i
-3. set .env file
-4. npm run dev
+2. cd brewernet-web-backend
+3. npm i
+4. set .env file
+5. npx prisma migrate dev
+6. npm run dev
 
 ## Default port
 
@@ -30,5 +32,13 @@ To implement another database, please update the database options
 
 - `GET /health` - Health check endpoint.
 
+## Docker Compose the Whole App
 ### Install Docker Desktop
 https://docs.docker.com/compose/install/
+
+### Set .env File
+1. change DATABASE_URL keyword "localhost" to "db"
+2. change username and password to the remote account username and password
+
+###Docker Compose Up
+run command `docker compose up`
