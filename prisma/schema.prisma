@@ -12,5 +12,60 @@ datasource db {
 model User {
   id    Int     @id @default(autoincrement())
   email String  @unique
-  name  String?
+  first_name String
+  middle_name String?
+  last_name String
+  user_name String @unique
+  mobile_number String @unique
+  avatar String
+  status Status @default(EMPLOYED)
+  job String?
+  self_intro String
+  linkedin_account String
+  resume Json
+  post String?
+  availableTimes AvailableTime[]
+  posts Post[]
+  chats Chat[]
+  message Message[]
+  address Json //Use Google Map api to get the json file and convert it to human readable address
+}
+
+model AvailableTime{
+  id Int @id @default(autoincrement())
+  user User @relation(fields: [id], references: [id])
+  userId    Int
+  startTime DateTime
+  endTime   DateTime
+}
+
+model Post{
+  id Int @id @default(autoincrement())
+  user User @relation(fields: [id], references: [id])
+  content String
+  img String?
+  video String?
+}
+
+model Chat{
+  id Int @id @default(autoincrement())
+  user1Id Int
+  user User[] 
+  message Message[]
+}
+
+model Message {
+  messageId Int    @id @default(autoincrement())
+  chat      Chat   @relation(fields: [chatId], references: [id])
+  sender    User   @relation( fields: [senderId], references: [id])
+  chatId    Int
+  senderId  Int
+}
+
+enum Status{
+  STUDENT
+  UMEMPLOYED
+  EMPLOYED
+  BOSS
+  RETIRED
 }
