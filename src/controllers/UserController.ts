@@ -32,15 +32,18 @@ export async function getUserByIdHandler(req: Request, res: Response) {
   }
 }
 
-export async function getAllUsersHandler(req: Request, res: Response): Promise<void> {
-    try {
-      const allUsers = await getAllUsers();
-      res.status(200).json(allUsers);
-    } catch (error) {
-      console.error('Error getting all users:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
-    }
+export async function getAllUsersHandler(
+  req: Request,
+  res: Response
+): Promise<void> {
+  try {
+    const allUsers = await getAllUsers();
+    res.status(200).json(allUsers);
+  } catch (error) {
+    console.error("Error getting all users:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
+}
 
 export async function updateUserHandler(req: Request, res: Response) {
   try {
@@ -64,10 +67,9 @@ export async function deleteUserHandler(req: Request, res: Response) {
     if (!deletedUser) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.status(200).json({message:"User deleted successfully"});
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
     res.status(500).json({ error: "Error deleting user" });
   }
 }
-

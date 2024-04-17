@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "@prisma/client": "^5.11.0",
+    "@prisma/client": "^5.12.1",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -20,13 +21,14 @@
     "@typescript-eslint/parser": "^7.4.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.34.1",
-    "prisma": "^5.11.0",
+    "prisma": "^5.12.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.3"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "prisma:seed": "node prisma/seed.js"
   },
   "author": "",
   "license": "ISC"
