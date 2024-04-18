@@ -2,15 +2,6 @@ import { PrismaClient, User } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function createUser(email: string, name: string): Promise<User> {
-  return await prisma.user.create({
-    data: {
-      email,
-      name,
-    },
-  });
-}
-
 export async function getUserById(id: number): Promise<User | null> {
   return await prisma.user.findUnique({
     where: { id },

@@ -1,22 +1,10 @@
 import { Request, Response } from "express";
 import {
-  createUser,
   getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
 } from "../services/UserService";
-
-export async function createUserHandler(req: Request, res: Response) {
-  try {
-    const { email, name } = req.body;
-    const newUser = await createUser(email, name);
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).json({ error: "Error creating user" });
-  }
-}
 
 export async function getUserByIdHandler(req: Request, res: Response) {
   try {
@@ -28,7 +16,7 @@ export async function getUserByIdHandler(req: Request, res: Response) {
     res.status(200).json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Error fetching user" });
+    res.status(500).json({ message: "Error fetching user" });
   }
 }
 
@@ -41,22 +29,22 @@ export async function getAllUsersHandler(
     res.status(200).json(allUsers);
   } catch (error) {
     console.error("Error getting all users:", error);
-    res.status(500).json({ error: "Failed to fetch users" });
+    res.status(500).json({ message: "Failed to fetch users" });
   }
 }
 
 export async function updateUserHandler(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const newData = req.body; // Assuming req.body contains the updated user data
+    const newData = req.body;
     const updatedUser = await updateUser(parseInt(id, 10), newData);
     if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     }
     res.status(200).json(updatedUser);
   } catch (error) {
     console.error("Error updating user:", error);
-    res.status(500).json({ error: "Error updating user" });
+    res.status(500).json({ message: "Error updating user" });
   }
 }
 
@@ -70,6 +58,6 @@ export async function deleteUserHandler(req: Request, res: Response) {
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res.status(500).json({ error: "Error deleting user" });
+    res.status(500).json({ message: "Error deleting user" });
   }
 }
