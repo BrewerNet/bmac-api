@@ -1,7 +1,9 @@
 import { PrismaClient, User } from "@prisma/client";
+import { HttpError } from "../middlewares/HttpError";
 import bcrypt from "bcryptjs";
 import * as crypto from "crypto";
 import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
@@ -22,26 +24,24 @@ export async function signUp(
 
     if (existingUser) {
       if (existingUser.active) {
-        throw new Error("User already registered and active.");
+        throw new HttpError("Email or username already exists.", 409);
       } else {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+        const verifyToken = generateVerifyToken(email);
 
-        const verifyToken = generateVerificationToken();
-        const verifyTokenExpires = new Date(Date.now() + 5 * 60 * 1000);
-
-        // Update existing inactive user
         const updatedUser = await prisma.user.update({
           where: {
             id: existingUser.id,
           },
           data: {
+            username: existingUser.username,
+            email: existingUser.email,
             firstName: firstName,
             lastName: lastName,
             middleName: middleName,
             password: hashedPassword,
             verifyToken: verifyToken,
-            verifyTokenExpires: verifyTokenExpires,
             active: false,
           },
         });
@@ -53,10 +53,7 @@ export async function signUp(
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      const verifyToken = generateVerificationToken();
-      const verifyTokenExpires = new Date(Date.now() + 5 * 60 * 1000);
-
-      // Create new user
+      const verifyToken = generateVerifyToken(email);
       const newUser = await prisma.user.create({
         data: {
           email: email,
@@ -66,7 +63,6 @@ export async function signUp(
           middleName: middleName,
           password: hashedPassword,
           verifyToken: verifyToken,
-          verifyTokenExpires: verifyTokenExpires,
           active: false,
         },
       });
@@ -75,8 +71,8 @@ export async function signUp(
       return newUser;
     }
   } catch (error) {
-    console.error("Registration error:", error);
-    throw new Error("Failed to register user.");
+    console.error("[ERROR] signUp()");
+    throw error;
   }
 }
 
@@ -95,45 +91,40 @@ export async function login(
     }
     return null;
   } catch (error) {
-    console.error("Login error:", error);
-    throw new Error("Login process failed.");
+    console.error("[ERROR] login()");
+    throw error;
   }
 }
 
-export async function verifyEmail(verifyToken: string): Promise<User> {
-  const user = await prisma.user.findUnique({
-    where: { verifyToken: verifyToken },
-  });
-
-  if (
-    !user ||
-    !user.verifyTokenExpires ||
-    new Date() > user.verifyTokenExpires
-  ) {
-    throw new Error("Verification token is invalid or has expired");
+export async function verifyEmail(verifyToken: string) {
+  const decodedToken = decodeJWTToken(verifyToken, "verification");
+  if (!decodedToken) {
+    throw new HttpError("Invalid or expired verification token.", 401);
   }
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { email: decodedToken.email },
+      data: {
+        active: true,
+        verifyToken: null,
+      },
+    });
 
-  const updatedUser = await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      active: true,
-      verifyToken: null,
-      verifyTokenExpires: null,
-    },
-  });
-
-  return updatedUser;
+    return updatedUser;
+  } catch (error) {
+    console.error("[ERROR] verifyEmail()");
+    throw error;
+  }
 }
 
-export async function resendEmail(email: string): Promise<void> {
-  const verifyToken = generateVerificationToken();
+export async function resendEmail(email: string) {
+  const verifyToken = generateVerifyToken(email);
   const verifyTokenExpires = new Date(Date.now() + 5 * 60 * 1000);
 
   await prisma.user.update({
     where: { email: email },
     data: {
       verifyToken: verifyToken,
-      verifyTokenExpires: verifyTokenExpires,
     },
   });
 
@@ -141,8 +132,66 @@ export async function resendEmail(email: string): Promise<void> {
 }
 
 /* Utilities */
-function generateVerificationToken() {
-  return crypto.randomBytes(64).toString("hex");
+function generateJWTToken(payload: {}, expiresIn: string = "5m"): string {
+  const secretKey = process.env.JWT_SECRET as string;
+  if (!secretKey) {
+    throw new HttpError(
+      "JWT_SECRET is not defined in the environment variables.",
+      500
+    );
+  }
+
+  const token = jwt.sign(payload, secretKey, {
+    expiresIn: expiresIn,
+  });
+
+  return token;
+}
+
+export function decodeJWTToken(token: string, expectedUsage: string) {
+  try {
+    const secretKey = process.env.JWT_SECRET as string;
+    if (!secretKey) {
+      throw new HttpError(
+        "JWT_SECRET is not defined in the environment variables.",
+        500
+      );
+    }
+
+    const decoded = jwt.verify(token, secretKey) as jwt.JwtPayload;
+    if (decoded.usage !== expectedUsage) {
+      throw new HttpError("Token usage mismatch.");
+    }
+
+    console.log("Token is valid:", decoded);
+    return decoded;
+  } catch (error: any) {
+    if (error instanceof jwt.TokenExpiredError) {
+      console.error("Token has expired:", error.message);
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      console.error("JWT error:", error.message);
+    } else {
+      console.error("Error verifying token:", error.message);
+    }
+    return null;
+  }
+}
+
+export function generateAuthToken(email: string) {
+  const payload = { email: email, usage: "authentication" };
+  const token = generateJWTToken(payload, "24h");
+  return token;
+}
+
+function generateVerifyToken(email: string) {
+  const randomToken = require("crypto").randomBytes(64).toString("hex");
+  const payload = {
+    email: email,
+    token: randomToken,
+    usage: "verification",
+  };
+  const token = generateJWTToken(payload, "5m");
+  return token;
 }
 
 async function sendVerificationEmail(email: string, token: string) {

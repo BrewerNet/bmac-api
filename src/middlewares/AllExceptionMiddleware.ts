@@ -1,14 +1,23 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 
-export function AllExceptionMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
-    const statusCode = err.statusCode || 500;
+export function AllExceptionMiddleware(
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  console.log("====================================================");
+  console.log(err);
+  console.log("====================================================");
 
-    const errorMessage = {
-        error: {
-            message: err.message || 'Internal Server Error',
-            statusCode: statusCode,
-        },
-    };
+  const statusCode = err.statusCode || 500;
 
-    res.status(statusCode).json(errorMessage);
+  const errorMessage = {
+    error: {
+      message: err.message || "Internal Server Error",
+      statusCode: statusCode,
+    },
+  };
+
+  res.status(statusCode).json(errorMessage);
 }
