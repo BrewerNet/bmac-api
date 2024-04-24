@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { HttpError } from "../middlewares/HttpError";
 import {
   signUp,
   login,
@@ -34,11 +35,11 @@ export const signUpHandler = async (
           "Signup successful, please check your email to activate your account.",
       });
     } else {
-      throw new Error("Failed to create new user.");
+      throw new HttpError("Failed to create new user.", 500);
     }
   } catch (error) {
-    console.error("[SIGNUP HANDLER ERROR]");
-    next(error);
+    console.error("[ERROR] signUpHandler()");
+    throw error;
   }
 };
 
@@ -52,17 +53,15 @@ export const loginHandler = async (
     const user = await login(identifier, password);
 
     if (!user) {
-      res
-        .status(401)
-        .json({ message: "User not found or invalid credentials" });
-      return;
+      throw new HttpError("User not found or invalid credentials.", 401);
     }
 
     if (!user.active) {
-      res.status(403).json({
-        message:
-          "Account not verified. Please check your email to activate your account.",
-      });
+      throw new HttpError(
+        "Account not verified. Please check your email to activate your account.",
+        403
+      );
+
       return;
     }
 
@@ -72,8 +71,8 @@ export const loginHandler = async (
       token: token,
     });
   } catch (error) {
-    console.error("Login handler error:", error);
-    res.status(500).json({ message: "Login process failed" });
+    console.error("[ERROR] loginHandler()");
+    throw error;
   }
 };
 
@@ -85,17 +84,21 @@ export const verifyEmailHandler = async (
 
   try {
     const user = await verifyEmail(token);
+    if (!user) {
+      throw new HttpError("User not found.", 404);
+    }
     res.status(200).json({
       message: "Account has been verified successfully",
       token: generateAuthToken(user.email),
     });
   } catch (error) {
-    console.error(error);
     if (error instanceof Error) {
-      res.status(404).json({ message: error.message });
+      throw new HttpError(error.message, 404);
     } else {
-      res.status(500).json({ message: "Internal server error" });
+      throw new HttpError("Internal server error.", 500);
     }
+    console.error("[ERROR] verifyEmailHandler()");
+    throw error;
   }
 };
 
@@ -111,15 +114,11 @@ export const resendEmailHandler = async (
     });
 
     if (!user) {
-      res
-        .status(404)
-        .json({ message: "No account found with that email address." });
-      return;
+      throw new HttpError("No account found with that email address.", 404);
     }
 
     if (user.active) {
-      res.status(400).json({ message: "This account is already verified." });
-      return;
+      throw new HttpError("This account is already verified.", 400);
     }
 
     await resendEmail(email);
@@ -128,7 +127,7 @@ export const resendEmailHandler = async (
       .status(200)
       .json({ message: "Verification email resent successfully." });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("[ERROR] resendEmailHandler()");
+    throw error;
   }
 };

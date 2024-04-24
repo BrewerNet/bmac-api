@@ -15,49 +15,27 @@ export async function signUp(
   middleName: string | null,
   password: string
 ): Promise<User> {
-  try {
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: email }, { username: username }],
-      },
-    });
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: email }, { username: username }],
+    },
+  });
 
-    if (existingUser) {
-      if (existingUser.active) {
-        throw new HttpError("Email or username already exists.", 409);
-      } else {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        const verifyToken = generateVerifyToken(email);
-
-        const updatedUser = await prisma.user.update({
-          where: {
-            id: existingUser.id,
-          },
-          data: {
-            username: existingUser.username,
-            email: existingUser.email,
-            firstName: firstName,
-            lastName: lastName,
-            middleName: middleName,
-            password: hashedPassword,
-            verifyToken: verifyToken,
-            active: false,
-          },
-        });
-
-        await sendVerificationEmail(email, verifyToken);
-        return updatedUser;
-      }
+  if (existingUser) {
+    if (existingUser.active) {
+      throw new HttpError("Email or username already exists.", 409);
     } else {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
-
       const verifyToken = generateVerifyToken(email);
-      const newUser = await prisma.user.create({
+
+      const updatedUser = await prisma.user.update({
+        where: {
+          id: existingUser.id,
+        },
         data: {
-          email: email,
-          username: username,
+          username: existingUser.username,
+          email: existingUser.email,
           firstName: firstName,
           lastName: lastName,
           middleName: middleName,
@@ -68,11 +46,28 @@ export async function signUp(
       });
 
       await sendVerificationEmail(email, verifyToken);
-      return newUser;
+      return updatedUser;
     }
-  } catch (error) {
-    console.error("[ERROR] signUp()");
-    throw error;
+  } else {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const verifyToken = generateVerifyToken(email);
+    const newUser = await prisma.user.create({
+      data: {
+        email: email,
+        username: username,
+        firstName: firstName,
+        lastName: lastName,
+        middleName: middleName,
+        password: hashedPassword,
+        verifyToken: verifyToken,
+        active: false,
+      },
+    });
+
+    await sendVerificationEmail(email, verifyToken);
+    return newUser;
   }
 }
 
@@ -80,41 +75,31 @@ export async function login(
   identifier: string,
   password: string
 ): Promise<User | null> {
-  try {
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [{ email: identifier }, { username: identifier }],
-      },
-    });
-    if (user && (await bcrypt.compare(password, user.password))) {
-      return user;
-    }
-    return null;
-  } catch (error) {
-    console.error("[ERROR] login()");
-    throw error;
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: identifier }, { username: identifier }],
+    },
+  });
+  if (user && (await bcrypt.compare(password, user.password))) {
+    return user;
   }
+  return null;
 }
 
 export async function verifyEmail(verifyToken: string) {
   const decodedToken = decodeJWTToken(verifyToken, "verification");
   if (!decodedToken) {
-    throw new HttpError("Invalid or expired verification token.", 401);
+    return null;
   }
-  try {
-    const updatedUser = await prisma.user.update({
-      where: { email: decodedToken.email },
-      data: {
-        active: true,
-        verifyToken: null,
-      },
-    });
+  const updatedUser = await prisma.user.update({
+    where: { email: decodedToken.email },
+    data: {
+      active: true,
+      verifyToken: null,
+    },
+  });
 
-    return updatedUser;
-  } catch (error) {
-    console.error("[ERROR] verifyEmail()");
-    throw error;
-  }
+  return updatedUser;
 }
 
 export async function resendEmail(email: string) {
@@ -160,20 +145,20 @@ export function decodeJWTToken(token: string, expectedUsage: string) {
 
     const decoded = jwt.verify(token, secretKey) as jwt.JwtPayload;
     if (decoded.usage !== expectedUsage) {
-      throw new HttpError("Token usage mismatch.");
+      throw new HttpError("Token usage mismatch.", 403);
     }
 
-    console.log("Token is valid:", decoded);
     return decoded;
   } catch (error: any) {
     if (error instanceof jwt.TokenExpiredError) {
-      console.error("Token has expired:", error.message);
+      throw new HttpError(`Token has expired: ${error.message}`, 401);
     } else if (error instanceof jwt.JsonWebTokenError) {
-      console.error("JWT error:", error.message);
+      throw new HttpError(`JWT error: ${error.message}`, 400);
     } else {
-      console.error("Error verifying token:", error.message);
+      throw new HttpError("Error verifying token: " + error.message, 500);
     }
-    return null;
+    console.error("[ERROR] decodeJWTToken()");
+    throw error;
   }
 }
 
@@ -200,8 +185,8 @@ async function sendVerificationEmail(email: string, token: string) {
   let transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "is0.jimhsiao@gmail.com",
-      pass: "tfml zcfw uojg boxr",
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
     },
   });
 
