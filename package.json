@@ -37,7 +37,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/index.ts",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:seed": "node prisma/seed.js",
+    "primsa:remove": "docker volume rm bmac-api_postgres"
   },
   "author": "",
   "license": "ISC"

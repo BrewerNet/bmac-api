@@ -10,9 +10,10 @@ const prisma = new PrismaClient();
 export async function signUp(
   email: string,
   username: string,
-  first_name: string,
-  last_name: string,
-  middle_name: string | null,
+  firstName: string,
+  lastName: string,
+  middleName: string | null,
+  mobileNumber: string,
   password: string
 ): Promise<User> {
   const existingUser = await prisma.user.findFirst({
@@ -36,11 +37,12 @@ export async function signUp(
         data: {
           username: existingUser.username,
           email: existingUser.email,
-          first_name: first_name,
-          last_name: last_name,
-          middle_name: middle_name,
+          first_name: firstName,
+          last_name: lastName,
+          middle_name: middleName,
           password: hashedPassword,
-          verifyToken: verifyToken,
+          verify_token: verifyToken,
+          mobile_number: mobileNumber,
           active: false,
         },
       });
@@ -55,13 +57,14 @@ export async function signUp(
     const verifyToken = generateVerifyToken(email);
     const newUser = await prisma.user.create({
       data: {
-        email: email,
-        username: username,
-        first_name: first_name,
-        last_name: last_name,
-        middle_name: middle_name,
+        username: existingUser.username,
+        email: existingUser.email,
+        first_name: firstName,
+        last_name: lastName,
+        middle_name: middleName,
         password: hashedPassword,
-        verifyToken: verifyToken,
+        verify_token: verifyToken,
+        mobile_number: mobileNumber,
         active: false,
       },
     });
@@ -95,7 +98,7 @@ export async function verifyEmail(verifyToken: string) {
     where: { email: decodedToken.email },
     data: {
       active: true,
-      verifyToken: null,
+      verify_token: null,
     },
   });
 
@@ -109,7 +112,7 @@ export async function resendEmail(email: string) {
   await prisma.user.update({
     where: { email: email },
     data: {
-      verifyToken: verifyToken,
+      verify_token: verifyToken,
     },
   });
 

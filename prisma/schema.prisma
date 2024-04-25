@@ -17,7 +17,7 @@ model User {
   username             String        @unique @db.VarChar(100)
   password             String        @db.VarChar(255)
   mobile_number        String        @unique
-  linkedin_account     String
+  linkedin_account     String?
   posts                Post[]
   chats                Chat[]
   comments             Comment[]

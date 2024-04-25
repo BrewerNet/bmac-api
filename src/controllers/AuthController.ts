@@ -18,14 +18,22 @@ export const signUpHandler = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { email, username, first_name, last_name, middle_name, password } =
-      req.body;
+    const {
+      email,
+      username,
+      first_name,
+      last_name,
+      middle_name,
+      password,
+      mobile_number,
+    } = req.body;
     const user = await signUp(
       email,
       username,
       first_name,
       last_name,
       middle_name,
+      mobile_number,
       password
     );
 

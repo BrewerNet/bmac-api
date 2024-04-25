@@ -11,6 +11,7 @@ async function main() {
       username: "jd",
       first_name: "Jon",
       last_name: "Don",
+      mobile_number: "0412345678",
       password: hashedPassword,
     },
   });
@@ -22,6 +23,7 @@ async function main() {
       first_name: "Harry",
       last_name: "Potter",
       middle_name: "James",
+      mobile_number: "0412345679",
       password: hashedPassword,
     },
   });
