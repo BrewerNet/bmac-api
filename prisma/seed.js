@@ -9,8 +9,8 @@ async function main() {
     data: {
       email: "jd@example.com",
       username: "jd",
-      firstName: "Jon",
-      lastName: "Don",
+      first_name: "Jon",
+      last_name: "Don",
       password: hashedPassword,
     },
   });
@@ -19,9 +19,9 @@ async function main() {
     data: {
       email: "hp@example.com",
       username: "hp",
-      firstName: "Harry",
-      lastName: "Potter",
-      middleName: "James",
+      first_name: "Harry",
+      last_name: "Potter",
+      middle_name: "James",
       password: hashedPassword,
     },
   });

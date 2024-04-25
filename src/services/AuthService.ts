@@ -10,9 +10,9 @@ const prisma = new PrismaClient();
 export async function signUp(
   email: string,
   username: string,
-  firstName: string,
-  lastName: string,
-  middleName: string | null,
+  first_name: string,
+  last_name: string,
+  middle_name: string | null,
   password: string
 ): Promise<User> {
   const existingUser = await prisma.user.findFirst({
@@ -36,9 +36,9 @@ export async function signUp(
         data: {
           username: existingUser.username,
           email: existingUser.email,
-          firstName: firstName,
-          lastName: lastName,
-          middleName: middleName,
+          first_name: first_name,
+          last_name: last_name,
+          middle_name: middle_name,
           password: hashedPassword,
           verifyToken: verifyToken,
           active: false,
@@ -57,9 +57,9 @@ export async function signUp(
       data: {
         email: email,
         username: username,
-        firstName: firstName,
-        lastName: lastName,
-        middleName: middleName,
+        first_name: first_name,
+        last_name: last_name,
+        middle_name: middle_name,
         password: hashedPassword,
         verifyToken: verifyToken,
         active: false,
