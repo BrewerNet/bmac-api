@@ -6,7 +6,9 @@ import {
   signUp,
   login,
   verifyEmail,
-  resendEmail,
+  sendVerifyEmail,
+  resetPassword,
+  sendResetPasswordEmail,
   generateAuthToken,
 } from "../services/AuthService";
 
@@ -47,13 +49,14 @@ export const signUpHandler = async (
     }
   } catch (error) {
     console.error("[ERROR] signUpHandler()");
-    throw error;
+    next(error);
   }
 };
 
 export const loginHandler = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { identifier, password } = req.body;
 
@@ -80,13 +83,14 @@ export const loginHandler = async (
     });
   } catch (error) {
     console.error("[ERROR] loginHandler()");
-    throw error;
+    next(error);
   }
 };
 
 export const verifyEmailHandler = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { token } = req.params;
 
@@ -100,19 +104,15 @@ export const verifyEmailHandler = async (
       token: generateAuthToken(user.email),
     });
   } catch (error) {
-    if (error instanceof Error) {
-      throw new HttpError(error.message, 404);
-    } else {
-      throw new HttpError("Internal server error.", 500);
-    }
     console.error("[ERROR] verifyEmailHandler()");
-    throw error;
+    next(error);
   }
 };
 
-export const resendEmailHandler = async (
+export const sendVerifyEmailHandler = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   const { email } = req.body;
 
@@ -129,13 +129,67 @@ export const resendEmailHandler = async (
       throw new HttpError("This account is already verified.", 400);
     }
 
-    await resendEmail(email);
+    await sendVerifyEmail(email);
 
     res
       .status(200)
       .json({ message: "Verification email resent successfully." });
   } catch (error) {
-    console.error("[ERROR] resendEmailHandler()");
-    throw error;
+    console.error("[ERROR] sendVerifyEmailHandler()");
+    next(error);
+  }
+};
+
+export const resetPasswordHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  const { password } = req.body;
+
+  if (!password) {
+    throw new HttpError("Password is required.", 400);
+  }
+
+  try {
+    const user = await resetPassword(token, password);
+
+    if (!user) {
+      throw new HttpError("Invalid or expired reset token.", 404);
+    }
+
+    res.status(200).json({ message: "Password reset successfully." });
+  } catch (error) {
+    console.error("[ERROR] resetPasswordHandler()");
+    next(error);
+  }
+};
+
+export const sendResetPasswordHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { email } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new HttpError("No account found with that email address.", 404);
+    }
+
+    await sendResetPasswordEmail(email);
+
+    res
+      .status(200)
+      .json({ message: "Reset password email sent successfully." });
+  } catch (error) {
+    console.error("[ERROR] sendResetPasswordHandler()");
+    next(error);
   }
 };

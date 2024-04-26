@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-
+import { HttpError } from "./HttpError";
 export function AllExceptionMiddleware(
   err: any,
   req: Request,
@@ -12,12 +12,20 @@ export function AllExceptionMiddleware(
 
   const statusCode = err.statusCode || 500;
 
-  const errorMessage = {
-    error: {
-      message: err.message || "Internal Server Error",
-      statusCode: statusCode,
-    },
-  };
-
-  res.status(statusCode).json(errorMessage);
+  if (err instanceof HttpError) {
+    res.status(err.statusCode).json({
+      error: {
+        message: err.message,
+        statusCode: err.statusCode,
+      },
+    });
+  } else {
+    const statusCode = 500;
+    res.status(statusCode).json({
+      error: {
+        message: err.message,
+        statusCode,
+      },
+    });
+  }
 }

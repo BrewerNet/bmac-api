@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { HttpError } from "../middlewares/HttpError";
 import {
   getAllUsers,
@@ -7,7 +7,11 @@ import {
   deleteUser,
 } from "../services/UserService";
 
-export async function getUserByIdHandler(req: Request, res: Response) {
+export async function getUserByIdHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { id } = req.params;
     const user = await getUserById(parseInt(id, 10));
@@ -17,24 +21,29 @@ export async function getUserByIdHandler(req: Request, res: Response) {
     res.status(200).json(user);
   } catch (error) {
     console.error("[ERROR] getUserByIdHandler()");
-    throw error;
+    next(error);
   }
 }
 
 export async function getAllUsersHandler(
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
     const allUsers = await getAllUsers();
     res.status(200).json(allUsers);
   } catch (error) {
     console.error("[ERROR] getAllUsersHandler()");
-    throw error;
+    next(error);
   }
 }
 
-export async function updateUserHandler(req: Request, res: Response) {
+export async function updateUserHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { id } = req.params;
     const newData = req.body;
@@ -45,11 +54,15 @@ export async function updateUserHandler(req: Request, res: Response) {
     res.status(200).json(updatedUser);
   } catch (error) {
     console.error("[ERROR] updateUserHandler()");
-    throw error;
+    next(error);
   }
 }
 
-export async function deleteUserHandler(req: Request, res: Response) {
+export async function deleteUserHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { id } = req.params;
     const deletedUser = await deleteUser(parseInt(id, 10));
@@ -59,6 +72,6 @@ export async function deleteUserHandler(req: Request, res: Response) {
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("[ERROR] deleteUserHandlerr()");
-    throw error;
+    next(error);
   }
 }

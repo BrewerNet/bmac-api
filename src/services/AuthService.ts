@@ -28,7 +28,7 @@ export async function signUp(
     } else {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
-      const verifyToken = generateVerifyToken(email);
+      const token = generateVerifyToken(email);
 
       const updatedUser = await prisma.user.update({
         where: {
@@ -41,35 +41,35 @@ export async function signUp(
           last_name: lastName,
           middle_name: middleName,
           password: hashedPassword,
-          verify_token: verifyToken,
+          verify_token: token,
           mobile_number: mobileNumber,
           active: false,
         },
       });
 
-      await sendVerificationEmail(email, verifyToken);
+      await sendEmail(verifyEmailContent(email, token));
       return updatedUser;
     }
   } else {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const verifyToken = generateVerifyToken(email);
+    const token = generateVerifyToken(email);
     const newUser = await prisma.user.create({
       data: {
-        username: existingUser.username,
-        email: existingUser.email,
+        username: username,
+        email: email,
         first_name: firstName,
         last_name: lastName,
         middle_name: middleName,
         password: hashedPassword,
-        verify_token: verifyToken,
+        verify_token: token,
         mobile_number: mobileNumber,
         active: false,
       },
     });
 
-    await sendVerificationEmail(email, verifyToken);
+    await sendEmail(verifyEmailContent(email, token));
     return newUser;
   }
 }
@@ -90,7 +90,7 @@ export async function login(
 }
 
 export async function verifyEmail(verifyToken: string) {
-  const decodedToken = decodeJWTToken(verifyToken, "verification");
+  const decodedToken = await decodeJWTToken(verifyToken, "verification");
   if (!decodedToken) {
     return null;
   }
@@ -105,18 +105,44 @@ export async function verifyEmail(verifyToken: string) {
   return updatedUser;
 }
 
-export async function resendEmail(email: string) {
-  const verifyToken = generateVerifyToken(email);
-  const verifyTokenExpires = new Date(Date.now() + 5 * 60 * 1000);
+export async function sendVerifyEmail(email: string) {
+  const token = generateVerifyToken(email);
 
   await prisma.user.update({
     where: { email: email },
     data: {
-      verify_token: verifyToken,
+      verify_token: token,
     },
   });
 
-  await sendVerificationEmail(email, verifyToken);
+  await sendEmail(verifyEmailContent(email, token));
+}
+
+export async function sendResetPasswordEmail(email: string) {
+  const token = generateResetPasswordToken(email);
+  await prisma.user.update({
+    where: { email: email },
+    data: {
+      verify_token: token,
+    },
+  });
+  await sendEmail(resetPasswordEmailContent(email, token));
+}
+
+export async function resetPassword(verifyToken: string, password: string) {
+  const decodedToken = await decodeJWTToken(verifyToken, "reset-password");
+  if (!decodedToken) {
+    return null;
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+  const updatedUser = await prisma.user.update({
+    where: { email: decodedToken.email },
+    data: { password: hashedPassword, verify_token: null },
+  });
+
+  return updatedUser;
 }
 
 /* Utilities */
@@ -136,7 +162,7 @@ function generateJWTToken(payload: {}, expiresIn: string = "5m"): string {
   return token;
 }
 
-export function decodeJWTToken(token: string, expectedUsage: string) {
+async function decodeJWTToken(token: string, expectedUsage: string) {
   try {
     const secretKey = process.env.JWT_SECRET as string;
     if (!secretKey) {
@@ -151,16 +177,26 @@ export function decodeJWTToken(token: string, expectedUsage: string) {
       throw new HttpError("Token usage mismatch.", 403);
     }
 
+    const user = await prisma.user.findUnique({
+      where: { email: decoded.email },
+    });
+
+    if (!user) {
+      throw new HttpError("User not found.", 404);
+    }
+
+    if (user.verify_token !== token) {
+      throw new HttpError("Token does not match the user's stored token.", 401);
+    }
+
     return decoded;
   } catch (error: any) {
+    console.error("[ERROR] decodeJWTToken()");
     if (error instanceof jwt.TokenExpiredError) {
       throw new HttpError(`Token has expired: ${error.message}`, 401);
     } else if (error instanceof jwt.JsonWebTokenError) {
       throw new HttpError(`JWT error: ${error.message}`, 400);
-    } else {
-      throw new HttpError("Error verifying token: " + error.message, 500);
     }
-    console.error("[ERROR] decodeJWTToken()");
     throw error;
   }
 }
@@ -171,35 +207,55 @@ export function generateAuthToken(email: string) {
   return token;
 }
 
-function generateVerifyToken(email: string) {
-  const randomToken = require("crypto").randomBytes(64).toString("hex");
+function generateResetPasswordToken(email: string) {
+  const randomToken = crypto.randomBytes(16).toString("hex");
   const payload = {
     email: email,
-    token: randomToken,
-    usage: "verification",
+    usage: "reset-password",
+    unique: randomToken,
   };
   const token = generateJWTToken(payload, "5m");
   return token;
 }
 
-async function sendVerificationEmail(email: string, token: string) {
-  const verificationLink = `${process.env.VERIFICATION_LINK}/${token}`;
+function generateVerifyToken(email: string) {
+  const randomToken = crypto.randomBytes(16).toString("hex");
+  const payload = { email: email, usage: "verification", unique: randomToken };
+  const token = generateJWTToken(payload, "5m");
+  return token;
+}
 
+async function sendEmail(content: {}) {
   let transporter = nodemailer.createTransport({
-    service: "gmail",
+    service: process.env.EMAIL_SERVICE,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
   });
 
-  let info = await transporter.sendMail({
-    from: '"BMaC" <is0.jimhsiao@gmail.com>',
+  let receipt = await transporter.sendMail(content);
+  console.log("Message sent: %s", receipt.messageId);
+}
+
+const verifyEmailContent = (email, token) => {
+  const link = `${process.env.VERIFICATION_LINK}/${token}`;
+  return {
+    from: `"BMaC" <${process.env.EMAIL_ADDRESS}>`,
     to: email,
     subject: "BMaC - Verify Your Email Address",
-    text: `Please click on the following link to verify your email address: ${verificationLink}`,
-    html: `<b>Please click on the following link to verify your email address:</b><br><a href="${verificationLink}">${verificationLink}</a>`,
-  });
+    text: `Please click on the following link to verify your email address: ${link}`,
+    html: `<b>Please click on the following link to verify your email address:</b><br><a href="${link}">${link}</a>`,
+  };
+};
 
-  console.log("Message sent: %s", info.messageId);
-}
+const resetPasswordEmailContent = (email, token) => {
+  const link = `${process.env.RESET_PASSWORD_LINK}/${token}`;
+  return {
+    from: `"BMaC" <${process.env.EMAIL_ADDRESS}>`,
+    to: email,
+    subject: "BMaC - Reset Your Password",
+    text: `Please click on the following link to reset your password: ${link}`,
+    html: `<b>Please click on the following link to reset your password:</b><br><a href="${link}">${link}</a>`,
+  };
+};
