@@ -1,73 +1,77 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
+import { HttpError } from "../middlewares/HttpError";
 import {
-  createUser,
   getAllUsers,
   getUserById,
   updateUser,
   deleteUser,
 } from "../services/UserService";
 
-export async function createUserHandler(req: Request, res: Response) {
-  try {
-    const { email, name } = req.body;
-    const newUser = await createUser(email, name);
-    res.status(201).json(newUser);
-  } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).json({ error: "Error creating user" });
-  }
-}
-
-export async function getUserByIdHandler(req: Request, res: Response) {
+export async function getUserByIdHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { id } = req.params;
     const user = await getUserById(parseInt(id, 10));
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      throw new HttpError("User not found.", 404);
     }
     res.status(200).json(user);
   } catch (error) {
-    console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Error fetching user" });
+    console.error("[ERROR] getUserByIdHandler()");
+    next(error);
   }
 }
 
-export async function getAllUsersHandler(req: Request, res: Response): Promise<void> {
-    try {
-      const allUsers = await getAllUsers();
-      res.status(200).json(allUsers);
-    } catch (error) {
-      console.error('Error getting all users:', error);
-      res.status(500).json({ error: 'Failed to fetch users' });
-    }
+export async function getAllUsersHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const allUsers = await getAllUsers();
+    res.status(200).json(allUsers);
+  } catch (error) {
+    console.error("[ERROR] getAllUsersHandler()");
+    next(error);
   }
+}
 
-export async function updateUserHandler(req: Request, res: Response) {
+export async function updateUserHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { id } = req.params;
-    const newData = req.body; // Assuming req.body contains the updated user data
+    const newData = req.body;
     const updatedUser = await updateUser(parseInt(id, 10), newData);
     if (!updatedUser) {
-      return res.status(404).json({ error: "User not found" });
+      throw new HttpError("User not found.", 404);
     }
     res.status(200).json(updatedUser);
   } catch (error) {
-    console.error("Error updating user:", error);
-    res.status(500).json({ error: "Error updating user" });
+    console.error("[ERROR] updateUserHandler()");
+    next(error);
   }
 }
 
-export async function deleteUserHandler(req: Request, res: Response) {
+export async function deleteUserHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
     const { id } = req.params;
     const deletedUser = await deleteUser(parseInt(id, 10));
     if (!deletedUser) {
-      return res.status(404).json({ error: "User not found" });
+      throw new HttpError("User not found.", 404);
     }
-    res.status(200).json({message:"User deleted successfully"});
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).json({ error: "Error deleting user" });
+    console.error("[ERROR] deleteUserHandlerr()");
+    next(error);
   }
 }
-
