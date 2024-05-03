@@ -7,7 +7,6 @@ import cors from "cors";
 import { AllExceptionMiddleware } from "./middlewares/AllExceptionMiddleware";
 import swaggerUi from "swagger-ui-express";
 import * as swaggerDocument from "./swagger.json";
-import * as swaggerDocument from "./swagger.json"
 
 dotenv.config();
 const app = express();

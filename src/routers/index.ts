@@ -25,11 +25,11 @@ const jwtMiddleware = (req, res, next) => {
 //Access control -> Test the JWT based on the route
 router.use("/user", jwtMiddleware, userRouter);
 router.use("/auth", (req,res,next) => {
-  if(req.path === '/login' || req.path === '/sign-up'){
+  if(req.path === "/send-verification" || req.path === "/reset-password" || req.path === "/send-reset-password"){
+    jwtMiddleware(req,res,next);
     next();
   }
   else{
-    jwtMiddleware(req,res,next);
     next();
   }
 }, authRouter);
