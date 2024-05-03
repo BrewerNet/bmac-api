@@ -24,9 +24,11 @@ model User {
   messages             Message[]
   active               Boolean       @default(false)
   verify_token         String?       @unique
+  verify_token_expires DateTime?
   user_hashtags        UserHashTag[]
   created_at           DateTime      @default(now())
   updated_at           DateTime      @updatedAt
+  profile              Profile?
 }
 
 model HashTag {
@@ -56,6 +58,8 @@ model Profile {
   geocode         String //Google Map API -> JSON -> Convert it to String (Used to calculate distance)
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
+  user            User            @relation(fields: [user_id], references: [id])
+  user_id         Int             @unique
 }
 
 //TBD

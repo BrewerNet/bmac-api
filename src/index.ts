@@ -6,6 +6,7 @@ import morgan from "morgan";
 import cors from "cors";
 import { AllExceptionMiddleware } from "./middlewares/AllExceptionMiddleware";
 import swaggerUi from "swagger-ui-express";
+import * as swaggerDocument from "./swagger.json";
 import * as swaggerDocument from "./swagger.json"
 
 dotenv.config();
@@ -71,6 +72,7 @@ app.get("/health", (req: Request, res: Response) => {
   res.send("health check success");
 });
 app.use("/api/v1", userRouter);
+
 app.use(AllExceptionMiddleware);
 
 app.listen(port, () => {
