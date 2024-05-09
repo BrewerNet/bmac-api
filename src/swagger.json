@@ -48,33 +48,106 @@
         }
       }
     },
-    "/api/v1/login":{
-      "post":{
-        "tags":["V1 User"],
-        "summary":"Login to app",
-        "responses":{
-          "200":{
-            "description":"OK"
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["V1 User"],
+        "summary": "Login to app",
+        "parameters": [
+          {
+            "name": "credentials",
+            "in": "body",
+            "description": "User login credentials",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "Login email address"
+                },
+                "password": {
+                  "type": "string",
+                  "description": "Login password"
+                }
+              },
+              "required": ["email", "password"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           },
-          "400":{
-            "description":"Bad Request"
+          "400": {
+            "description": "Bad Request"
           },
-          "401":{
-            "description":"Unauthorized"
+          "401": {
+            "description": "Unauthorized"
           },
-          "403":{
-            "description":"Forbidden"
+          "403": {
+            "description": "Forbidden"
           },
-          "404":{
-            "description":"Not Found"
+          "404": {
+            "description": "Not Found"
           }
         }
       }
     },
-    "/api/v1/sign-up":{
+    "/api/v1/auth/sign-up":{
       "post":{
         "tags":["V1 User"],
         "summary":"Create a new user",
+        "parameters": [
+          {
+            "name": "newUser",
+            "in": "body",
+            "description": "Reqiored signup information",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "User email address"
+                },
+                "username": {
+                  "type": "string",
+                  "description": "Username"
+                },
+                "first_name": {
+                  "type": "string",
+                  "description": "First name"
+                },
+                "middle_name": {
+                  "type": "string",
+                  "description": "Middle name"
+                },
+                "last_name": {
+                  "type": "string",
+                  "description": "Last name"
+                },
+                "password": {
+                  "type": "string",
+                  "description": "User password"
+                },
+                "mobile_number": {
+                  "type": "string",
+                  "description": "Mobile phone number"
+                }
+              },
+              "required": [
+                "email",
+                "username",
+                "first_name",
+                "last_name",
+                "password",
+                "mobile_number"
+              ]
+            }
+          }
+        ],
         "responses":{
           "200":{
             "description":"OK"
@@ -94,7 +167,7 @@
         }
       }
     },
-    "/api/v1/verify/:token":{
+    "/api/v1/auth/verify/:token":{
       "get":{
         "tags":["V1 User"],
         "summary":"Verify user email",
@@ -129,10 +202,28 @@
         }
       }
     },
-    "/api/v1/users/resend-verification":{
+    "/api/v1/auth/send-verification":{
       "post":{
         "tags":["V1 User"],
         "summary":"Request verification email",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "body",
+            "description": "User login email",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Login Email"
+                }
+              },
+              "required": ["email"]
+            }
+          }
+        ],
         "responses":{
           "200":{
             "description":"OK"
@@ -152,7 +243,89 @@
         }
       }
     },
-    "/api/v1/users":{
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["V1 User"],
+        "summary": "Reset account password",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "body",
+            "description": "User login credentials",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "password": {
+                  "type": "string",
+                  "description": "Login password"
+                }
+              },
+              "required": ["password"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/send-reset-password": {
+      "post": {
+        "tags": ["V1 User"],
+        "summary": "Send reset password email",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "body",
+            "description": "User login email",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "Login email"
+                }
+              },
+              "required": ["email"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/user/all":{
       "get":{
         "tags":["V1 Auth"],
         "summary":"Get all users",
@@ -175,7 +348,7 @@
         }
       }
     },
-    "/api/v1/users/:id":{
+    "/api/v1/user/:id":{
       "get":{
         "tags":["V1 Auth"],
         "summary":"Get user by ID",
@@ -273,308 +446,6 @@
           "404":{
             "description":"Not Found"
           }
-        }
-      }
-    }
-  },
-  "definitions":{
-    "User":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "email":{
-          "type":"string"
-        },
-        "first_name":{
-          "type":"string"
-        },
-        "middle_name":{
-          "type":"string"
-        },
-        "last_name":{
-          "type":"string"
-        },
-        "user_name":{
-          "type":"string"
-        },
-        "password":{
-          "type":"string"
-        },
-        "mobile_number":{
-          "type":"string"
-        },
-        "linkedin_account":{
-          "type":"string"
-        },
-        "posts":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/Post"
-          }
-        },
-        "chats":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/Chat"
-          }
-        },
-        "commnents":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/Comment"
-          }
-        },
-        "messages":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/Message"
-          }
-        },
-        "active":{
-          "type":"boolean"
-        },
-        "verify_token":{
-          "type":"string"
-        },
-        "verify_token_expires":{
-          "type":"DateTime"
-        },
-        "user_hashtags":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/UserHashTag"
-          }
-        },
-        "created_at":{
-          "type":"DateTime"
-        },
-        "updated_at":{
-          "type":"DateTime"
-        }
-      }
-    },
-    "HashTag":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "name":{
-          "type":"string"
-        },
-        "user_hashtags":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/UserHashTag"
-          }
-        }
-      }
-    },
-    "UserHashTag":{
-      "type":"object",
-      "properties":{
-          "user_id":{
-            "type":"integer"
-          },
-          "hashtag_id":{
-            "type":"integer"
-          },
-          "hashtags":{
-            "type":"object",
-            "$ref":"#/definitions/HashTag"
-          },
-          "users":{
-            "type":"object",
-            "$ref":"#/definitions/User"
-          }
-      }
-    },
-    "Profile":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "resume":{
-          "type":"Json"
-        },
-        "avatar":{
-          "type":"string"
-        },
-        "self_intro":{
-          "type":"string"
-        },
-        "available_times":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/AvailableTime"
-          }
-        },
-        "country":{
-          "type":"string"
-        },
-        "city":{
-          "type":"string"
-        },
-        "suburb":{
-          "type":"string"
-        },
-        "geocode":{
-          "type":"string"
-        },
-        "created_at":{
-          "type":"DateTime"
-        },
-        "updated_at":{
-          "type":"DateTime"
-        }
-      }
-    },
-    "AvailableTime":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "profile":{
-          "type":"object",
-          "$ref":"#/definitions/Profile"
-        },
-        "profile_id":{
-          "type":"integer"
-        },
-        "start_time":{
-          "type":"DateTime"
-        },
-        "end_time":{
-          "type":"DateTime"
-        },
-        "created_at":{
-          "type":"DateTime"
-        },
-        "updated_at":{
-          "type":"DateTime"
-        }
-      }
-    },
-    "Post":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "user":{
-          "type":"object",
-          "$ref":"#/definitions/User"
-        },
-        "content":{
-          "type":"string"
-        },
-        "commnents":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/Comment"
-          }
-        },
-        "created_at":{
-          "type":"DateTime"
-        },
-        "updated_at":{
-          "type":"DateTime"
-        }
-      }
-    },
-    "Comment":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "post":{
-          "type":"object",
-          "$ref":"#/definitions/Post"
-        },
-        "user":{
-          "type":"object",
-          "$ref":"#/definitions/User"
-        },
-        "user_id":{
-          "type":"integer"
-        },
-        "post_id":{
-          "type":"integer"
-        },
-        "content":{
-          "type":"string"
-        },
-        "created_at":{
-          "type":"DateTime"
-        },
-        "updated_at":{
-          "type":"DateTime"
-        }
-      }
-    },
-    "Chat":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "user":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/User"
-          }
-        },
-        "messages":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/Message"
-          }
-        },
-        "created_at":{
-          "type":"DateTime"
-        },
-        "updated_at":{
-          "type":"DateTime"
-        }
-      }
-    },
-    "Message":{
-      "type":"object",
-      "properties":{
-        "id":{
-          "type":"integer"
-        },
-        "chat":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/Chat"
-          }
-        },
-        "user":{
-          "type":"array",
-          "items":{
-            "$ref":"#/definitions/User"
-          }
-        },
-        "chat_id":{
-          "type":"integer"
-        },
-        "sender_id":{
-          "type":"integer"
-        },
-        "content":{
-          "type":"string"
-        },
-        "created_at":{
-          "type":"DateTime"
-        },
-        "updated_at":{
-          "type":"DateTime"
         }
       }
     }
