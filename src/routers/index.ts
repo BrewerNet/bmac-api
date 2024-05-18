@@ -2,6 +2,7 @@ import express from "express";
 import authRouter from "./AuthRouter";
 import userRouter from "./UserRouter";
 import profileRouter from "./ProfileRouter"
+import googleRouter from "./GoogleRouter"
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
@@ -35,5 +36,6 @@ router.use("/auth", (req,res,next) => {
   }
 }, authRouter);
 router.use("/profile",profileRouter);
+router.use("/google",googleRouter);
 
 export default router;
