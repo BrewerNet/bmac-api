@@ -48,14 +48,14 @@ model UserHashTag {
 
 model Profile {
   id              Int             @id @default(autoincrement())
-  resume          Json
-  avatar          String //stored in Object DB -> URL
+  resume          Json?
+  avatar          String? //stored in Object DB -> URL
   self_intro      String?
   available_times AvailableTime[]
-  city            String
-  country         String
-  suburb          String
-  geocode         String //Google Map API -> JSON -> Convert it to String (Used to calculate distance)
+  city            String?
+  country         String?
+  suburb          String?
+  geocode         String? //Google Map API -> JSON -> Convert it to String (Used to calculate distance)
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
   user            User            @relation(fields: [user_id], references: [id])

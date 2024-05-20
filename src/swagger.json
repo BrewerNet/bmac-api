@@ -19,6 +19,10 @@
       {
         "name":"V1 Auth",
         "description":"V1 Auth APIs"
+      },
+      {
+        "name":"V1 Profile",
+        "description":"V1 Profile APIs"
       }
   ],
   "schemes":["http"],
@@ -61,7 +65,7 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
+                "identifier": {
                   "type": "string",
                   "format": "email",
                   "description": "Login email address"
@@ -167,7 +171,7 @@
         }
       }
     },
-    "/api/v1/auth/verify/:token":{
+    "/api/v1/auth/verify/{token}":{
       "get":{
         "tags":["V1 User"],
         "summary":"Verify user email",
@@ -445,6 +449,123 @@
           },
           "404":{
             "description":"Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/profile/create-profile": {
+      "post": {
+        "tags": ["V1 Profile"],
+        "summary": "Create user profile",
+        "parameters": [
+          {
+            "name": "user data",
+            "in": "body",
+            "description": "Profile creation information",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "user id"
+                }
+              },
+              "required": ["id"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/profile/update-profile/{id}": {
+      "post": {
+        "tags": ["V1 Profile"],
+        "summary": "Update user profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "User id to find user profile"
+          },
+          {
+            "name": "Updated profile data",
+            "in": "body",
+            "description": "Updated profile information",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "resume": {
+                  "type": "object",
+                  "description": "User resume"
+                },
+                "avatar": {
+                  "type": "string",
+                  "description": "User avatar"
+                },
+                "self_intro": {
+                  "type": "string",
+                  "description": "User self-introduction"
+                },
+                "country": {
+                  "type": "string",
+                  "description": "User country location"
+                },
+                "city": {
+                  "type": "string",
+                  "description": "User city location"
+                },
+                "suburb": {
+                  "type": "string",
+                  "description": "User suburb location"
+                },
+                "geocode": {
+                  "type": "string",
+                  "description": "User location geocode"
+                }
+                
+              },
+              "required": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
           }
         }
       }

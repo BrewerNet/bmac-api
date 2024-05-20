@@ -1,6 +1,7 @@
 import express from "express";
 import authRouter from "./AuthRouter";
 import userRouter from "./UserRouter";
+import profileRouter from "./ProfileRouter"
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
@@ -33,5 +34,6 @@ router.use("/auth", (req,res,next) => {
     next();
   }
 }, authRouter);
+router.use("/profile",profileRouter);
 
 export default router;

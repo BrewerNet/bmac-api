@@ -11,6 +11,9 @@ import {
   sendResetPasswordEmail,
   generateAuthToken,
 } from "../services/AuthService";
+import {
+  createProfile
+} from "../services/ProfileService";
 
 const prisma = new PrismaClient();
 
@@ -40,10 +43,16 @@ export const signUpHandler = async (
     );
 
     if (user) {
-      res.status(201).json({
-        message:
-          "Signup successful, please check your email to activate your account.",
-      });
+      const profile = await createProfile(user.id);
+      if(profile){
+        res.status(201).json({
+          message:
+            "Signup successful, please check your email to activate your account.",
+        });
+      }else{
+        throw new HttpError("Failed to create new profile.",500);
+      }
+      
     } else {
       throw new HttpError("Failed to create new user.", 500);
     }
