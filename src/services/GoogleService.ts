@@ -1,6 +1,10 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { google } from 'googleapis';
+import { PrismaClient, User } from "@prisma/client";
+import bcrypt from "bcryptjs";
+
+const prisma = new PrismaClient();
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -24,4 +28,42 @@ export async function getGoogleUser(code: string): Promise<any> {
   });
   const userinfo = await oauth2.userinfo.get();
   return userinfo.data;
+}
+
+export async function googleLogin(userInfo: any) : Promise<User>{
+  
+  const user = await prisma.user.findFirst({
+    where: {
+      email:userInfo.email
+    },
+  });
+  if(!user){
+    //register user
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(userInfo.email, salt);
+    const newUser = await prisma.user.create({
+      data: {
+        username: userInfo.name,
+        email: userInfo.email,
+        first_name: userInfo.firstName,
+        last_name: userInfo.lastName,
+        middle_name:"",
+        password: hashedPassword,
+        verify_token: null,
+        mobile_number: "",
+        active: true,
+      },
+    });
+    return newUser;
+  }
+  return user;
+
+  
+  /* FIX THE LOGIC of this part */
+  //check database status, if registered -> set status to be active and send cookie with timer, if not registered -> register it and set it active
+  //redirect this to homepage with successful login msg
+  // res.status(200).json({
+  //   message: "Logged in successfully!",
+  //   token: token,
+  // });
 }

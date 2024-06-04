@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { getGoogleAuthUrl, getGoogleUser } from '../services/GoogleService';
+import { getGoogleAuthUrl, getGoogleUser, googleLogin } from '../services/GoogleService';
 import {generateAuthToken} from "../services/AuthService"
 import { HttpError } from '../middlewares/HttpError';
+
+
 
 export async function redirectToGoogle(req: Request, res: Response) {
     try {
@@ -15,8 +17,13 @@ export async function redirectToGoogle(req: Request, res: Response) {
 
 export async function handleGoogleCallback(req: Request, res: Response, next: NextFunction) {
     try {
-      const userinfo = await getGoogleUser(req.query.code as string);
-      const token = generateAuthToken(userinfo.email);
+      const userInfo = await getGoogleUser(req.query.code as string);
+      const user = await googleLogin(userInfo);
+      
+      if(!user){
+        throw new HttpError("User not found or invalid credentials.", 401);
+      }
+      const token = generateAuthToken(user.email);
       res.status(200).json({
         message: "Logged in successfully!",
         token: token,
