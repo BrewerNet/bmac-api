@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 async function main() {
-  const password = "password"; 
+  const password = "password";
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -30,8 +30,22 @@ async function main() {
     },
   });
 
+  const userThree = await prisma.user.create({
+    data: {
+      email: "is0.jh25@gmail.com",
+      username: "is0xjh25",
+      first_name: "Jim",
+      last_name: "Hsiao",
+      middle_name: "",
+      mobile_number: "0415863535",
+      password: hashedPassword,
+      active: true,
+    },
+  });
+
   console.log(`Created user ONE with id: ${userOne.id}`);
   console.log(`Created user TWO with id: ${userTwo.id}`);
+  console.log(`Created user THREE with id: ${userThree.id}`);
 }
 
 main()

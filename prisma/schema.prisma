@@ -24,7 +24,6 @@ model User {
   messages             Message[]
   active               Boolean       @default(false)
   verify_token         String?       @unique
-  verify_token_expires DateTime?
   user_hashtags        UserHashTag[]
   created_at           DateTime      @default(now())
   updated_at           DateTime      @updatedAt

@@ -162,7 +162,7 @@ function generateJWTToken(payload: {}, expiresIn: string = "5m"): string {
   return token;
 }
 
-async function decodeJWTToken(token: string, expectedUsage: string) {
+export async function decodeJWTToken(token: string, expectedUsage: string) {
   try {
     const secretKey = process.env.JWT_SECRET as string;
     if (!secretKey) {
@@ -172,7 +172,11 @@ async function decodeJWTToken(token: string, expectedUsage: string) {
       );
     }
 
+    token = token.split(" ")[1];
+
     const decoded = jwt.verify(token, secretKey) as jwt.JwtPayload;
+
+    console.log(decoded);
     if (decoded.usage !== expectedUsage) {
       throw new HttpError("Token usage mismatch.", 403);
     }
@@ -185,7 +189,7 @@ async function decodeJWTToken(token: string, expectedUsage: string) {
       throw new HttpError("User not found.", 404);
     }
 
-    if (user.verify_token !== token) {
+    if (expectedUsage === "verification" && user.verify_token !== token) {
       throw new HttpError("Token does not match the user's stored token.", 401);
     }
 
