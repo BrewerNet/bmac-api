@@ -27,6 +27,14 @@ export const signUp = async (
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
+
+  // Todo: Use early return to reduce nesting
+
+  // if (existingUser && existingUser.active) throw new HttpErrorMiddleware("Email or username already exists.", 409);
+  // if (!existingUser) {
+  // }
+  // Signup logic here
+
   if (existingUser) {
     if (existingUser.active) {
       throw new HttpErrorMiddleware("Email or username already exists.", 409);
