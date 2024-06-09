@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { HttpError } from "./HttpError";
+import { HttpErrorMiddleware } from "./HttpErrorMiddleware";
 export function AllExceptionMiddleware(
   err: any,
   req: Request,
@@ -12,7 +12,7 @@ export function AllExceptionMiddleware(
 
   const statusCode = err.statusCode || 500;
 
-  if (err instanceof HttpError) {
+  if (err instanceof HttpErrorMiddleware) {
     res.status(err.statusCode).json({
       error: {
         message: err.message,

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { HttpError } from "../middlewares/HttpError";
+import { HttpErrorMiddleware } from "../middlewares/HttpErrorMiddleware";
 import {
   signUp,
   login,
@@ -9,11 +9,8 @@ import {
   sendVerifyEmail,
   resetPassword,
   sendResetPasswordEmail,
-  generateAuthToken,
 } from "../services/AuthService";
-import {
-  createProfile
-} from "../services/ProfileService";
+import { createProfile } from "../services/ProfileService";
 
 const prisma = new PrismaClient();
 
@@ -29,9 +26,10 @@ export const signUpHandler = async (
       first_name,
       last_name,
       middle_name,
-      password,
       mobile_number,
+      password,
     } = req.body;
+
     const user = await signUp(
       email,
       username,
@@ -44,17 +42,16 @@ export const signUpHandler = async (
 
     if (user) {
       const profile = await createProfile(user.id);
-      if(profile){
+      if (profile) {
         res.status(201).json({
           message:
             "Signup successful, please check your email to activate your account.",
         });
-      }else{
-        throw new HttpError("Failed to create new profile.",500);
+      } else {
+        throw new HttpErrorMiddleware("Failed to create new profile.", 500);
       }
-      
     } else {
-      throw new HttpError("Failed to create new user.", 500);
+      throw new HttpErrorMiddleware("Failed to create new user.", 500);
     }
   } catch (error) {
     console.error("[ERROR] signUpHandler()");
@@ -70,25 +67,11 @@ export const loginHandler = async (
   const { identifier, password } = req.body;
 
   try {
-    const user = await login(identifier, password);
+    const authToken = await login(identifier, password);
 
-    if (!user) {
-      throw new HttpError("User not found or invalid credentials.", 401);
-    }
-
-    if (!user.active) {
-      throw new HttpError(
-        "Account not verified. Please check your email to activate your account.",
-        403
-      );
-
-      return;
-    }
-
-    const token = generateAuthToken(user.email);
     res.status(200).json({
       message: "Logged in successfully!",
-      token: token,
+      token: authToken,
     });
   } catch (error) {
     console.error("[ERROR] loginHandler()");
@@ -101,16 +84,16 @@ export const verifyEmailHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { token } = req.params;
+  const { verifyToken } = req.params;
 
   try {
-    const user = await verifyEmail(token);
-    if (!user) {
-      throw new HttpError("User not found.", 404);
+    const authToken = verifyEmail(verifyToken);
+    if (!authToken) {
+      throw new HttpErrorMiddleware("User not found.", 404);
     }
     res.status(200).json({
       message: "Account has been verified successfully",
-      token: generateAuthToken(user.email),
+      token: authToken,
     });
   } catch (error) {
     console.error("[ERROR] verifyEmailHandler()");
@@ -124,20 +107,7 @@ export const sendVerifyEmailHandler = async (
   next: NextFunction
 ): Promise<void> => {
   const { email } = req.body;
-
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new HttpError("No account found with that email address.", 404);
-    }
-
-    if (user.active) {
-      throw new HttpError("This account is already verified.", 400);
-    }
-
+  
     await sendVerifyEmail(email);
 
     res
@@ -159,14 +129,14 @@ export const resetPasswordHandler = async (
   const { password } = req.body;
 
   if (!password) {
-    throw new HttpError("Password is required.", 400);
+    throw new HttpErrorMiddleware("Password is required.", 400);
   }
 
   try {
     const user = await resetPassword(token, password);
 
     if (!user) {
-      throw new HttpError("Invalid or expired reset token.", 404);
+      throw new HttpErrorMiddleware("Invalid or expired reset token.", 404);
     }
 
     res.status(200).json({ message: "Password reset successfully." });
@@ -189,7 +159,10 @@ export const sendResetPasswordHandler = async (
     });
 
     if (!user) {
-      throw new HttpError("No account found with that email address.", 404);
+      throw new HttpErrorMiddleware(
+        "No account found with that email address.",
+        404
+      );
     }
 
     await sendResetPasswordEmail(email);

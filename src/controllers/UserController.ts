@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { HttpError } from "../middlewares/HttpError";
+import { HttpErrorMiddleware } from "../middlewares/HttpErrorMiddleware";
 import {
   getAllUsers,
   getUserById,
@@ -16,7 +16,7 @@ export async function getUserByIdHandler(
     const { id } = req.params;
     const user = await getUserById(parseInt(id, 10));
     if (!user) {
-      throw new HttpError("User not found.", 404);
+      throw new HttpErrorMiddleware("User not found.", 404);
     }
     res.status(200).json(user);
   } catch (error) {
@@ -49,7 +49,7 @@ export async function updateUserHandler(
     const newData = req.body;
     const updatedUser = await updateUser(parseInt(id, 10), newData);
     if (!updatedUser) {
-      throw new HttpError("User not found.", 404);
+      throw new HttpErrorMiddleware("User not found.", 404);
     }
     res.status(200).json(updatedUser);
   } catch (error) {
@@ -67,7 +67,7 @@ export async function deleteUserHandler(
     const { id } = req.params;
     const deletedUser = await deleteUser(parseInt(id, 10));
     if (!deletedUser) {
-      throw new HttpError("User not found.", 404);
+      throw new HttpErrorMiddleware("User not found.", 404);
     }
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
