@@ -41,20 +41,15 @@ export const signUpHandler = async (
     );
 
     if (user) {
-      const profile = await createProfile(user.id);
-      if (profile) {
-        res.status(201).json({
-          message:
-            "Signup successful, please check your email to activate your account.",
-        });
-      } else {
-        throw new HttpErrorMiddleware("Failed to create new profile.", 500);
-      }
+      res.status(201).json({
+        message:
+          "Signup successful, please check your email to activate your account.",
+      });
     } else {
       throw new HttpErrorMiddleware("Failed to create new user.", 500);
     }
   } catch (error) {
-    console.error("[ERROR] signUpHandler()");
+    console.error("[ERROR] signUpHandler()", error);
     next(error);
   }
 };
@@ -68,7 +63,6 @@ export const loginHandler = async (
 
   try {
     const authToken = await login(identifier, password);
-
     res.status(200).json({
       message: "Logged in successfully!",
       token: authToken,
@@ -84,19 +78,16 @@ export const verifyEmailHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { verifyToken } = req.params;
+  const { token } = req.params;
 
   try {
-    const authToken = verifyEmail(verifyToken);
-    if (!authToken) {
-      throw new HttpErrorMiddleware("User not found.", 404);
-    }
+    const authToken = await verifyEmail(token);
     res.status(200).json({
-      message: "Account has been verified successfully",
+      message: "Account has been verified successfully.",
       token: authToken,
     });
   } catch (error) {
-    console.error("[ERROR] verifyEmailHandler()");
+    console.error("[ERROR] verifyEmailHandler()", error);
     next(error);
   }
 };
@@ -106,15 +97,16 @@ export const sendVerifyEmailHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { email } = req.body;
-  
+  try {
+    const { email } = req.body;
+
     await sendVerifyEmail(email);
 
-    res
-      .status(200)
-      .json({ message: "Verification email resent successfully." });
+    res.status(200).json({
+      message: "Verification email sent successfully. Please check your email.",
+    });
   } catch (error) {
-    console.error("[ERROR] sendVerifyEmailHandler()");
+    console.error("[ERROR] sendVerifyEmailHandler()", error);
     next(error);
   }
 };
@@ -151,27 +143,17 @@ export const sendResetPasswordHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { email } = req.body;
-
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      throw new HttpErrorMiddleware(
-        "No account found with that email address.",
-        404
-      );
-    }
+    const { email } = req.body;
 
     await sendResetPasswordEmail(email);
 
-    res
-      .status(200)
-      .json({ message: "Reset password email sent successfully." });
+    res.status(200).json({
+      message:
+        "Reset Password email sent successfully. Please check your email.",
+    });
   } catch (error) {
-    console.error("[ERROR] sendResetPasswordHandler()");
+    console.error("[ERROR] sendResetPasswordHandler()", error);
     next(error);
   }
 };

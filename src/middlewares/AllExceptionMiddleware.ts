@@ -6,26 +6,16 @@ export function AllExceptionMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  console.log("====================================================");
-  console.log(err);
-  console.log("====================================================");
-
   const statusCode = err.statusCode || 500;
 
   if (err instanceof HttpErrorMiddleware) {
     res.status(err.statusCode).json({
-      error: {
-        message: err.message,
-        statusCode: err.statusCode,
-      },
+      message: err.message,
     });
   } else {
     const statusCode = 500;
     res.status(statusCode).json({
-      error: {
-        message: err.message,
-        statusCode,
-      },
+      message: err.message,
     });
   }
 }

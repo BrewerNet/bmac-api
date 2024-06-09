@@ -8,17 +8,7 @@ import { jwtMiddleware } from "../middlewares/JWTMiddleware";
 
 const router = express.Router();
 
-router.use(
-  "/auth",
-  (req, res, next) => {
-    if (req.path === "/send-verification") {
-      jwtMiddleware;
-    } else {
-      next();
-    }
-  },
-  authRouter
-);
+router.use("/auth", authRouter);
 
 router.use("/user", jwtMiddleware, userRouter);
 

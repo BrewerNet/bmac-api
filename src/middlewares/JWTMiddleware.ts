@@ -41,7 +41,9 @@ export const analyseJWTToken = async (
       );
     }
 
-    token = token.split(" ")[1];
+    if (expectedUsage === "authentication") {
+      token = token.split(" ")[1];
+    }
 
     const decodedToken = jwt.verify(token, secretKey) as jwt.JwtPayload;
 
@@ -57,21 +59,15 @@ export const analyseJWTToken = async (
       throw new HttpErrorMiddleware("User not found.", 404);
     }
 
-    if (expectedUsage === "verification" && user.verify_token !== token) {
-      throw new HttpErrorMiddleware(
-        "Token does not match the user's stored token.",
-        401
-      );
-    }
     return user;
   } catch (error: any) {
-    console.error("[ERROR] analyseJWTToken()");
+    console.error("[ERROR] analyseJWTToken()", error);
     if (error instanceof jwt.TokenExpiredError) {
       throw new HttpErrorMiddleware(`Token has expired: ${error.message}`, 401);
     } else if (error instanceof jwt.JsonWebTokenError) {
       throw new HttpErrorMiddleware(`JWT error: ${error.message}`, 400);
     }
-    throw error;
+    throw new HttpErrorMiddleware("Internal server error.", 500);
   }
 };
 
@@ -86,9 +82,7 @@ export const jwtMiddleware = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({ message: "Invalid token format" });
     }
-
     req.user = await analyseJWTToken(token, "authentication");
-
     next();
   } catch (error) {
     next(error);

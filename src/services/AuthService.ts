@@ -28,40 +28,18 @@ export const signUp = async (
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // Todo: Use early return to reduce nesting
+  if (existingUser && existingUser.active) {
+    throw new HttpErrorMiddleware("Email or username already exists.", 409);
+  }
 
-  // if (existingUser && existingUser.active) throw new HttpErrorMiddleware("Email or username already exists.", 409);
-  // if (!existingUser) {
-  // }
-  // Signup logic here
-
-  if (existingUser) {
-    if (existingUser.active) {
-      throw new HttpErrorMiddleware("Email or username already exists.", 409);
-    } else {
-      const updatedUser = await prisma.user.update({
-        where: {
-          id: existingUser.id,
-        },
-        data: {
-          username: existingUser.username,
-          email: existingUser.email,
-          first_name: firstName,
-          last_name: lastName,
-          middle_name: middleName,
-          password: hashedPassword,
-          mobile_number: mobileNumber,
-          active: false,
-        },
-      });
-      await sendVerifyEmail(email);
-      return updatedUser;
-    }
-  } else {
-    const newUser = await prisma.user.create({
+  if (existingUser && !existingUser.active) {
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: existingUser.id,
+      },
       data: {
-        username: username,
-        email: email,
+        username: existingUser.username,
+        email: existingUser.email,
         first_name: firstName,
         last_name: lastName,
         middle_name: middleName,
@@ -70,10 +48,25 @@ export const signUp = async (
         active: false,
       },
     });
-
     await sendVerifyEmail(email);
-    return newUser;
+    return updatedUser;
   }
+
+  const newUser = await prisma.user.create({
+    data: {
+      username: username,
+      email: email,
+      first_name: firstName,
+      last_name: lastName,
+      middle_name: middleName,
+      password: hashedPassword,
+      mobile_number: mobileNumber,
+      active: false,
+    },
+  });
+
+  await sendVerifyEmail(email);
+  return newUser;
 };
 
 export const login = async (
@@ -93,6 +86,10 @@ export const login = async (
     );
   }
 
+  if (!(await bcrypt.compare(password, user.password))) {
+    throw new HttpErrorMiddleware("Username or Password not matched.", 401);
+  }
+
   if (!user.active) {
     sendVerifyEmail(user.email);
     throw new HttpErrorMiddleware(
@@ -101,17 +98,39 @@ export const login = async (
     );
   }
 
-  if (!(await bcrypt.compare(password, user.password))) {
-    throw new HttpErrorMiddleware("Username or Password not matched.", 401);
-  }
-
-  return generateJWTToken(user.email, "authentication");
+  return generateJWTToken(user.email, "authentication", "24h");
 };
 
 export const verifyEmail = async (token: string): Promise<string> => {
-  const user = await analyseJWTToken(token, "verification");
-  const authToken = generateJWTToken(user.email, "authentication");
-  return authToken;
+  try {
+    const user = await analyseJWTToken(token, "verification");
+
+    if (!user) {
+      throw new HttpErrorMiddleware("User not found.", 404);
+    }
+
+    if (user.active) {
+      throw new HttpErrorMiddleware("User is already active.", 400);
+    }
+
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { active: true },
+    });
+
+    const authToken = generateJWTToken(user.email, "authentication", "24h");
+    return authToken;
+  } catch (error) {
+    console.error("[ERROR] verifyEmail()", error);
+    if (error instanceof HttpErrorMiddleware) {
+      throw error;
+    } else {
+      throw new HttpErrorMiddleware(
+        "Internal server error during email verification.",
+        500
+      );
+    }
+  }
 };
 
 export const sendVerifyEmail = async (email: string) => {
@@ -149,7 +168,12 @@ export const resetPassword = async (
   password: string
 ): Promise<string> => {
   const user = await analyseJWTToken(token, "reset-password");
-  const authToken = generateJWTToken(user.email, "reset-password");
+
+  if (!user) {
+    throw new HttpErrorMiddleware("User not found.", 404);
+  }
+
+  const authToken = generateJWTToken(user.email, "authentication", "24h");
   return authToken;
 };
 

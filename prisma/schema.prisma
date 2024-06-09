@@ -23,7 +23,6 @@ model User {
   comments             Comment[]
   messages             Message[]
   active               Boolean       @default(false)
-  verify_token         String?       @unique
   user_hashtags        UserHashTag[]
   created_at           DateTime      @default(now())
   updated_at           DateTime      @updatedAt
