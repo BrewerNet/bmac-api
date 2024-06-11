@@ -8,6 +8,7 @@ import { HttpError } from '../middlewares/HttpError';
 export async function redirectToGoogle(req: Request, res: Response) {
     try {
         const url = await getGoogleAuthUrl();
+        // res.status(200).json({url});
         res.redirect(url);
     } catch (error) {
         console.error('Failed to redirect to Google:', error);

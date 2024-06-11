@@ -45,8 +45,8 @@ export async function googleLogin(userInfo: any) : Promise<User>{
       data: {
         username: userInfo.name,
         email: userInfo.email,
-        first_name: userInfo.firstName,
-        last_name: userInfo.lastName,
+        first_name: " ",
+        last_name: " ",
         middle_name:"",
         password: hashedPassword,
         verify_token: null,
