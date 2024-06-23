@@ -1,5 +1,8 @@
 # BrewerNet API Server
 
+Hi, welcome to Buy me a coffee dev project
+
+
 ## Table of Contents
 - [Setup](#setup)
 - [API Endpoints](#api-endpoints)
