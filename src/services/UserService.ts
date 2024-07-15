@@ -30,7 +30,6 @@ export async function updateUser(
   if (newData.password) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newData.password, salt);
-    console.log("Password is hashed.");
     newData.password = hashedPassword;
   }
 
