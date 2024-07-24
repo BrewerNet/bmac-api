@@ -62,3 +62,14 @@ export async function updateProfile(
     data: data,
   });
 }
+
+export async function getProfile(userId: number): Promise<Profile | null> {
+  return await prisma.profile.findUnique({
+    where: {
+      user_id: userId,
+    },
+    include: {
+      available_times: true, // Include the related available_times
+    },
+  });
+}
