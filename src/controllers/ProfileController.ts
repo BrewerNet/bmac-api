@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { HttpErrorMiddleware } from "../middlewares/HttpErrorMiddleware";
-import { createProfile, updateProfile } from "../services/ProfileService";
+import { createProfile, updateProfile, getProfile } from "../services/ProfileService";
 
 export const createProfileHandler = async (
   req: Request,
@@ -47,4 +47,25 @@ export const updateProfileHandler = async (
     next(error);
   }
   return;
+};
+
+export const getProfileHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const profile = await getProfile(parseInt(id, 10));
+
+    if (!profile) {
+      throw new HttpErrorMiddleware("Profile not found", 404);
+    }
+
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error("[ERROR] getProfileHandler()", error);
+    next(error);
+  }
 };
